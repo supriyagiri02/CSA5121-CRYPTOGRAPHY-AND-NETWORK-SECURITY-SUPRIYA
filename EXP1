@@ -1,0 +1,20 @@
+def caesar_cipher(text, k):
+    result = ""
+    for ch in text:
+        if 'A' <= ch <= 'Z':
+            result += chr((ord(ch) - ord('A') + k) % 26 + ord('A'))
+        elif 'a' <= ch <= 'z':
+            result += chr((ord(ch) - ord('a') + k) % 26 + ord('a'))
+        else:
+            result += ch
+    return result
+
+text = input("Enter a message: ")
+k = int(input("Enter shift value (1-25): "))
+
+if 1 <= k <= 25:
+    encrypted = caesar_cipher(text, k)
+    print("Encrypted text:", encrypted)
+else:
+    print("Invalid shift value! Enter between 1 and 25.")
+ 
