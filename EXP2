@@ -1,0 +1,36 @@
+import string
+
+# Example substitution alphabet (must be 26 unique letters)
+cipher_alphabet = "QWERTYUIOPASDFGHJKLZXCVBNM"
+
+# Create mapping dictionaries
+plain_alphabet = string.ascii_uppercase
+encrypt_map = {plain_alphabet[i]: cipher_alphabet[i] for i in range(26)}
+decrypt_map = {cipher_alphabet[i]: plain_alphabet[i] for i in range(26)}
+
+def encrypt(text):
+    result = ""
+    for ch in text.upper():
+        if ch.isalpha():
+            result += encrypt_map[ch]
+        else:
+            result += ch
+    return result
+
+def decrypt(text):
+    result = ""
+    for ch in text.upper():
+        if ch.isalpha():
+            result += decrypt_map[ch]
+        else:
+            result += ch
+    return result
+
+# --- User Interaction ---
+plaintext = input("Enter plaintext: ")
+ciphertext = encrypt(plaintext)
+print("Encrypted Text:", ciphertext)
+
+decrypt_choice = input("Do you want to decrypt it? (yes/no): ").lower()
+if decrypt_choice == "yes":
+    print("Decrypted Text:", decrypt(ciphertext))
