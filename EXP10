@@ -1,0 +1,73 @@
+# Playfair Encryption using a fixed 5x5 matrix
+
+matrix = [
+    ['M','F','H','I','K'],
+    ['U','N','O','P','Q'],
+    ['Z','V','W','X','Y'],
+    ['E','L','A','R','G'],
+    ['D','S','T','B','C']
+]
+
+# Create letter-to-position lookup (I/J handled as I)
+pos = {}
+for r in range(5):
+    for c in range(5):
+        pos[matrix[r][c]] = (r, c)
+pos['J'] = pos['I']   # combine I/J rule
+
+def clean_text(text):
+    text = text.upper()
+    result = ""
+    for ch in text:
+        if ch.isalpha():
+            if ch == 'J':
+                ch = 'I'
+            result += ch
+    return result
+
+def make_digrams(text):
+    dig = []
+    i = 0
+    while i < len(text):
+        a = text[i]
+        b = text[i+1] if i+1 < len(text) else 'X'
+
+        if a == b:       # repeated letters → insert X
+            dig.append(a + 'X')
+            i += 1
+        else:
+            dig.append(a + b)
+            i += 2
+    if len(dig[-1]) == 1: 
+        dig[-1] += 'X'
+    return dig
+
+def encrypt_pair(a, b):
+    r1, c1 = pos[a]
+    r2, c2 = pos[b]
+
+    # Same row → shift right
+    if r1 == r2:
+        return matrix[r1][(c1+1)%5] + matrix[r2][(c2+1)%5]
+
+    # Same column → shift down
+    if c1 == c2:
+        return matrix[(r1+1)%5][c1] + matrix[(r2+1)%5][c2]
+
+    # Rectangle → swap columns
+    return matrix[r1][c2] + matrix[r2][c1]
+
+def playfair_encrypt(message):
+    text = clean_text(message)
+    digrams = make_digrams(text)
+    cipher = ""
+    for d in digrams:
+        cipher += encrypt_pair(d[0], d[1])
+    return cipher
+
+
+# Given message
+message = "Must see you over Cadogan West. Coming at once."
+ciphertext = playfair_encrypt(message)
+
+print("Ciphertext:", ciphertext)
