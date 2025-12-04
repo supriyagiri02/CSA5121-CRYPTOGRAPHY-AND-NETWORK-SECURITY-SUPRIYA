@@ -1,0 +1,67 @@
+# One-Time Pad Vigenere Cipher - Python Program
+# Performs:
+# (a) Encrypt "send more money" with key stream
+# (b) Given ciphertext from (a), find key that decrypts it to "cash not needed"
+
+def to_num(c):
+    return ord(c.upper()) - ord('A')
+
+def to_char(n):
+    return chr((n % 26) + ord('A'))
+
+def encrypt_char(p, k):
+    return to_char((to_num(p) + k) % 26)
+
+def decrypt_char(c, k):
+    return to_char((to_num(c) - k) % 26)
+
+def key_from_pair(p, c):
+    return (to_num(c) - to_num(p)) % 26
+
+
+# ---------------------------------------------
+# Part (a)
+# ---------------------------------------------
+
+plaintext1 = "SENDMOREMONEY".replace(" ", "")
+key_stream_a = [9,0,1,7,23,15,21,14,11,11,2,8,9]
+
+ciphertext1 = ""
+
+print("Part (a) - Encrypting 'send more money'")
+print("Plaintext:", plaintext1)
+
+for i in range(len(plaintext1)):
+    ciphertext1 += encrypt_char(plaintext1[i], key_stream_a[i])
+
+print("Ciphertext:", ciphertext1)
+print()
+
+
+# ---------------------------------------------
+# Part (b)
+# ---------------------------------------------
+
+plaintext2 = "CASHNOTNEEDED".replace(" ", "")
+ciphertext2 = ciphertext1  # same ciphertext from part (a)
+
+print("Part (b) - Using ciphertext to decrypt into 'cash not needed'")
+print("Target Plaintext:", plaintext2)
+print("Ciphertext from part (a):", ciphertext2)
+
+key_stream_b = []
+
+# Compute required key
+for p, c in zip(plaintext2, ciphertext2):
+    key_stream_b.append(key_from_pair(p, c))
+
+print("\nRequired Key Stream:")
+print(key_stream_b)
+
+# Verify by decryption
+recovered = ""
+for c, k in zip(ciphertext2, key_stream_b):
+    recovered += decrypt_char(c, k)
+
+print("\nVerification:")
+print("Recovered Plaintext:", recovered)
