@@ -1,0 +1,72 @@
+# Hill Cipher (2x2) - Encryption and Decryption with step-by-step calculations
+import string
+
+# Key matrix (given)
+K = [[9, 4],
+     [5, 7]]
+
+# Inverse of K modulo 26 (precomputed in math part below)
+K_inv = [[5, 12],
+         [15, 25]]
+
+alpha_to_num = {ch: i for i, ch in enumerate(string.ascii_uppercase)}
+num_to_alpha = {i: ch for ch, i in alpha_to_num.items()}
+
+def clean_text(s):
+    s = "".join(ch for ch in s.upper() if ch.isalpha())
+    # No special I/J handling required for this problem (we use 26-letter alphabet)
+    if len(s) % 2 == 1:
+        s += "X"   # pad with X
+    return s
+
+def pair_to_vector(a, b):
+    return [alpha_to_num[a], alpha_to_num[b]]
+
+def vector_to_pair(v):
+    return num_to_alpha[v[0] % 26] + num_to_alpha[v[1] % 26]
+
+def mat_vec_mul(mat, vec):
+    return [ (mat[0][0]*vec[0] + mat[0][1]*vec[1]) % 26,
+             (mat[1][0]*vec[0] + mat[1][1]*vec[1]) % 26 ]
+
+def encrypt(plaintext):
+    P = clean_text(plaintext)
+    print("Cleaned Plaintext:", P)
+    ciphertext = ""
+    print("\n--- ENCRYPTION STEPS ---")
+    for i in range(0, len(P), 2):
+        a, b = P[i], P[i+1]
+        v = pair_to_vector(a, b)
+        cvec = mat_vec_mul(K, v)
+        cipher_pair = vector_to_pair(cvec)
+        print(f"{a}{b} -> vector {v} -> K * v = {cvec} -> {cipher_pair}")
+        ciphertext += cipher_pair
+    return ciphertext
+
+def decrypt(ciphertext):
+    C = "".join(ch for ch in ciphertext.upper() if ch.isalpha())
+    print("Ciphertext to decrypt:", C)
+    plaintext = ""
+    print("\n--- DECRYPTION STEPS ---")
+    for i in range(0, len(C), 2):
+        a, b = C[i], C[i+1]
+        v = pair_to_vector(a, b)
+        pvec = mat_vec_mul(K_inv, v)
+        plain_pair = vector_to_pair(pvec)
+        print(f"{a}{b} -> vector {v} -> K_inv * v = {pvec} -> {plain_pair}")
+        plaintext += plain_pair
+    return plaintext
+
+# Given plaintext
+message = "meet me at the usual place at ten rather than eight oclock"
+
+# Encrypt
+cipher = encrypt(message)
+print("\nFinal Ciphertext:", cipher)
+
+# Decrypt (to demonstrate recovering the plaintext)
+recovered = decrypt(cipher)
+# Remove possible padding X at the end if it was added
+if recovered.endswith("X") and len(recovered) > 0 and len(recovered) % 2 == 0:
+    recovered = recovered[:-1]
+print("\nRecovered Plaintext (cleaned):", recovered)
