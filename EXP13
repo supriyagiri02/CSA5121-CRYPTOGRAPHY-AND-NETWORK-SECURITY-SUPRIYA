@@ -1,0 +1,98 @@
+# Hill Cipher – Demonstration of a Chosen Plaintext Attack
+# This program shows how to recover the Hill cipher key matrix
+# when the attacker can choose plaintext and obtain corresponding ciphertext.
+
+import numpy as np
+
+# Convert letter to number (A=0 ... Z=25)
+def ltov(c):
+    return ord(c.upper()) - ord('A')
+
+# Convert number to letter
+def vtol(n):
+    return chr((n % 26) + ord('A'))
+
+# Convert text (string) to numeric column vectors (2-letter blocks)
+def text_to_matrix2(text):
+    nums = [ltov(c) for c in text.upper() if c.isalpha()]
+    if len(nums) % 2 == 1:
+        nums.append(23)   # pad with 'X'
+    matrix = np.array(nums).reshape(2, -1)
+    return matrix
+
+# Modular inverse of matrix (mod 26)
+def matrix_mod_inv(A, mod=26):
+    det = int(round(np.linalg.det(A)))
+    det_mod = det % mod
+
+    # Find modular multiplicative inverse of determinant
+    for i in range(1, mod):
+        if (det_mod * i) % mod == 1:
+            det_inv = i
+            break
+
+    # Adjugate matrix
+    A_adj = np.round(det * np.linalg.inv(A)).astype(int) % mod
+
+    return (det_inv * A_adj) % mod
+
+
+print("=== CHOSEN PLAINTEXT ATTACK ON HILL CIPHER (2x2) ===")
+
+# -----------------------------------------------------------------------
+# STEP 1: Attacker chooses plaintext pairs
+# Choose plaintext P1 = "AA" → vector [0,0]
+# Choose plaintext P2 = "AB" → vector [0,1]
+# Choose plaintext P3 = "BA" → vector [1,0]
+# Choose plaintext P4 = "BB" → vector [1,1]
+#
+# These four plaintext blocks give a full-rank matrix.
+# -----------------------------------------------------------------------
+
+plaintext = "AABBABBB"   # 4 blocks: AA, BB, AB, BB (2x4 matrix)
+
+P = text_to_matrix2(plaintext)
+print("\nChosen Plaintext Matrix P (numeric):")
+print(P)
+
+# -----------------------------------------------------------------------
+# STEP 2: Assume attacker queries encryption oracle and gets ciphertext C
+# For demonstration, we encrypt using a secret key K (unknown to attacker)
+# -----------------------------------------------------------------------
+
+# Secret key matrix (unknown during attack)
+K_secret = np.array([[3, 10],
+                     [20, 9]])   # Just an example valid Hill key
+
+# Encryption oracle (attacker does NOT know the key)
+C = (K_secret @ P) % 26
+
+print("\nCiphertext Matrix C (obtained from encryption oracle):")
+print(C)
+
+# -----------------------------------------------------------------------
+# STEP 3: Attacker computes key matrix
+# K = C * P^{-1} (mod 26)
+# -----------------------------------------------------------------------
+
+P_inv = matrix_mod_inv(P % 26)
+
+K_recovered = (C @ P_inv) % 26
+
+print("\nRecovered Key Matrix K (attacker result):")
+print(K_recovered)
+
+print("\nActual Secret Key Matrix K_secret:")
+print(K_secret % 26)
+
+# -----------------------------------------------------------------------
+# STEP 4: Verify by encrypting a test word
+# -----------------------------------------------------------------------
+
+test_plain = "HI"
+t = text_to_matrix2(test_plain)
+cipher_test = (K_recovered @ t) % 26
+cipher_text = ''.join(vtol(int(x)) for x in cipher_test.flatten())
+
+print("\nTest Encryption using recovered key:")
+print(f"Plaintext: {test_plain}  → Cipher: {cipher_text}")
