@@ -1,0 +1,89 @@
+# 3DES-CBC encryption & decryption example using PyCryptodome
+# Requires: pip install pycryptodome
+#
+# This script:
+# - Generates a valid 3DES key (16 or 24 bytes)
+# - Uses CBC mode with a random IV
+# - Implements PKCS#7 padding/unpadding
+# - Shows encryption (ciphertext as hex) and successful decryption
+
+from Crypto.Cipher import DES3
+from Crypto.Random import get_random_bytes
+import math
+
+# PKCS7 padding for block ciphers
+def pkcs7_pad(data: bytes, block_size: int) -> bytes:
+    pad_len = block_size - (len(data) % block_size)
+    return data + bytes([pad_len]) * pad_len
+
+def pkcs7_unpad(padded: bytes) -> bytes:
+    if len(padded) == 0:
+        raise ValueError("Invalid padding (empty input).")
+    pad_len = padded[-1]
+    if pad_len < 1 or pad_len > len(padded):
+        raise ValueError("Invalid padding length.")
+    if padded[-pad_len:] != bytes([pad_len]) * pad_len:
+        raise ValueError("Invalid PKCS#7 padding bytes.")
+    return padded[:-pad_len]
+
+# Make a valid 3DES key (either 16 or 24 bytes). PyCryptodome requires keys with correct parity
+# We will use DES3.adjust_key_parity to ensure parity bits are set correctly.
+from Crypto.Util import Padding
+from Crypto.Util.number import long_to_bytes, bytes_to_long
+from Crypto.Cipher import DES3 as DES3module
+
+def generate_3des_key(key_size=24):
+    # key_size: 16 (two-key 3DES) or 24 (three-key 3DES)
+    if key_size not in (16, 24):
+        raise ValueError("3DES key_size must be 16 or 24 bytes")
+    raw = get_random_bytes(key_size)
+    # adjust parity to produce a valid DES3 key
+    valid_key = DES3module.adjust_key_parity(raw)
+    # If the key is weak, regenerate
+    while True:
+        try:
+            # attempt to create cipher to check key validity
+            DES3.new(valid_key, DES3.MODE_ECB)
+            break
+        except ValueError:
+            raw = get_random_bytes(key_size)
+            valid_key = DES3module.adjust_key_parity(raw)
+    return valid_key
+
+def encrypt_3des_cbc(plaintext: bytes, key: bytes) -> (bytes, bytes):
+    """
+    Returns (iv, ciphertext)
+    """
+    block_size = DES3.block_size  # 8 bytes
+    iv = get_random_bytes(block_size)
+    cipher = DES3.new(key, DES3.MODE_CBC, iv)
+    padded = pkcs7_pad(plaintext, block_size)
+    ct = cipher.encrypt(padded)
+    return iv, ct
+
+def decrypt_3des_cbc(iv: bytes, ciphertext: bytes, key: bytes) -> bytes:
+    cipher = DES3.new(key, DES3.MODE_CBC, iv)
+    padded = cipher.decrypt(ciphertext)
+    return pkcs7_unpad(padded)
+
+# Example usage
+if __name__ == "__main__":
+    # Message to encrypt
+    message = b"Meet me at the usual place at ten rather than eight o'clock."
+    print("Plaintext:", message.decode())
+
+    # Generate 3DES key (24-byte three-key 3DES is stronger than 16-byte two-key)
+    key = generate_3des_key(24)
+    print("3DES key (hex):", key.hex())
+
+    iv, ciphertext = encrypt_3des_cbc(message, key)
+    print("IV (hex):", iv.hex())
+    print("Ciphertext (hex):", ciphertext.hex())
+
+    # Decrypt and verify
+    recovered = decrypt_3des_cbc(iv, ciphertext, key)
+    print("Recovered:", recovered.decode())
+
+    # Show how one could store/transmit: often IV || ciphertext is used
+    packed = iv + ciphertext
+    print("Packed (IV||CT) length:", len(packed))
