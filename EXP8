@@ -1,0 +1,47 @@
+import string
+
+def generate_cipher_from_keyword(keyword):
+    keyword = keyword.upper()
+    alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    cipher = ""
+    for ch in keyword:
+        if ch.isalpha() and ch not in cipher:
+            cipher += ch
+    for ch in alphabet:
+        if ch not in cipher:
+            cipher += ch
+    return cipher
+
+def encrypt(plaintext, cipher):
+    alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    plaintext = plaintext.upper()
+    ciphertext = ""
+    for ch in plaintext:
+        if ch in alphabet:
+            index = alphabet.index(ch)
+            ciphertext += cipher[index]
+        else:
+            ciphertext += ch
+    return ciphertext
+
+def decrypt(ciphertext, cipher):
+    alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    plaintext = ""
+    for ch in ciphertext:
+        if ch in cipher:
+            index = cipher.index(ch)
+            plaintext += alphabet[index]
+        else:
+            plaintext += ch
+    return plaintext
+
+keyword = input("Enter keyword: ")
+cipher_sequence = generate_cipher_from_keyword(keyword)
+print("Generated cipher sequence:", cipher_sequence)
+
+plaintext = input("Enter plaintext: ")
+encrypted = encrypt(plaintext, cipher_sequence)
+print("Encrypted text:", encrypted)
+
+decrypted = decrypt(encrypted, cipher_sequence)
+print("Decrypted text:", decrypted)
