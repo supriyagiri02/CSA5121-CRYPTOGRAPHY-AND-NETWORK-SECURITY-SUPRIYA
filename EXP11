@@ -1,0 +1,15 @@
+import math
+
+# Calculate log2(25!)
+log2_25_fact = 0
+for i in range(1, 26):
+    log2_25_fact += math.log2(i)
+
+# Total possible keys = 25!
+total_keys_power = log2_25_fact
+
+# Unique keys = 25! / 8  (because 8 symmetry transformations)
+unique_keys_power = log2_25_fact - 3  # subtract log2(8) = 3
+
+print("Total possible Playfair keys  ≈ 2^", round(total_keys_power, 2))
+print("Effectively unique keys       ≈ 2^", round(unique_keys_power, 2))
