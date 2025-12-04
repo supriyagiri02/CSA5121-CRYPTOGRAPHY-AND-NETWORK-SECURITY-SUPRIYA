@@ -1,0 +1,66 @@
+# Letter-Frequency Attack on Additive (Caesar) Cipher
+# Produces the top N most likely plaintexts automatically.
+
+from collections import Counter
+
+# Expected English letter frequencies (approx. %)
+english_freq = {
+    'E':12.0, 'T':9.10, 'A':8.12, 'O':7.68, 'I':7.31,
+    'N':6.95, 'S':6.28, 'R':6.02, 'H':5.92, 'D':4.32,
+    'L':3.98, 'U':2.88, 'C':2.71, 'M':2.61, 'F':2.30,
+    'Y':2.11, 'W':2.09, 'G':2.03, 'P':1.82, 'B':1.49,
+    'V':1.11, 'K':0.69, 'X':0.17, 'Q':0.11, 'J':0.10,
+    'Z':0.07
+}
+
+def score_text(text):
+    """Chi-square scoring (lower = more likely English)."""
+    text = text.upper()
+    total = sum(c.isalpha() for c in text)
+    if total == 0:
+        return float("inf")
+
+    counts = Counter(c for c in text if c.isalpha())
+    score = 0.0
+    for letter in english_freq:
+        observed = counts.get(letter, 0)
+        expected = english_freq[letter] * total / 100
+        if expected > 0:
+            score += ((observed - expected) ** 2) / expected
+    return score
+
+def shift_char(c, k):
+    if c.isalpha():
+        base = ord('A')
+        return chr((ord(c.upper()) - base - k) % 26 + base)
+    return c
+
+def decrypt(cipher, k):
+    return ''.join(shift_char(c, k) for c in cipher)
+
+def attack(cipher, top_n=10):
+    results = []
+    for k in range(26):
+        plaintext = decrypt(cipher, k)
+        s = score_text(plaintext)
+        results.append((s, k, plaintext))
+
+    # Sort by best (smallest) chi-square score
+    results.sort(key=lambda x: x[0])
+
+    return results[:top_n]
+
+
+# -------------------------------
+# User Interface
+# -------------------------------
+
+cipher = input("Enter ciphertext: ")
+n = int(input("How many guesses do you want (e.g., 10)? "))
+
+guesses = attack(cipher, top_n=n)
+
+print("\nTop", n, "Most Likely Plaintexts:")
+for score, key, text in guesses:
+    print(f"\nKey = {key:2d}   Score = {score:.2f}")
+    print(text)
