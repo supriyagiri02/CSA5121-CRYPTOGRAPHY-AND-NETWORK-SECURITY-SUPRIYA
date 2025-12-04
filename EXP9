@@ -1,0 +1,87 @@
+import string
+
+# Generate 5x5 Playfair matrix using a keyword
+def generate_matrix(keyword):
+    keyword = keyword.upper().replace("J", "I")
+    matrix = []
+    used = set()
+
+    # Add keyword characters
+    for ch in keyword:
+        if ch.isalpha() and ch not in used:
+            matrix.append(ch)
+            used.add(ch)
+
+    # Add remaining letters (skip J)
+    for ch in string.ascii_uppercase:
+        if ch != "J" and ch not in used:
+            matrix.append(ch)
+            used.add(ch)
+
+    # Convert to 5x5 matrix
+    matrix_5x5 = [matrix[i:i+5] for i in range(0, 25, 5)]
+    return matrix_5x5
+
+# Find position of letter in matrix
+def find_position(matrix, ch):
+    if ch == "J":
+        ch = "I"
+    for r in range(5):
+        for c in range(5):
+            if matrix[r][c] == ch:
+                return r, c
+    return None
+
+# Clean ciphertext
+def clean_text(text):
+    text = "".join(ch for ch in text.upper() if ch.isalpha())
+    text = text.replace("J", "I")
+    if len(text) % 2 != 0:
+        text += "X"  # add padding
+    return text
+
+# Decrypt one pair
+def decrypt_pair(a, b, matrix):
+    r1, c1 = find_position(matrix, a)
+    r2, c2 = find_position(matrix, b)
+
+    if r1 == r2:  # same row → move left
+        return matrix[r1][(c1 - 1) % 5] + matrix[r2][(c2 - 1) % 5]
+    elif c1 == c2:  # same column → move up
+        return matrix[(r1 - 1) % 5][c1] + matrix[(r2 - 1) % 5][c2]
+    else:  # rectangle swap
+        return matrix[r1][c2] + matrix[r2][c1]
+
+# Decrypt full message
+def decrypt(ciphertext, matrix):
+    plaintext = ""
+    for i in range(0, len(ciphertext), 2):
+        a = ciphertext[i]
+        b = ciphertext[i+1]
+        plaintext += decrypt_pair(a, b, matrix)
+    return plaintext
+
+# --------- MAIN PROGRAM ---------
+
+print("Playfair Cipher Decryption for PT-109")
+key = input("Enter Playfair key: ")
+
+matrix = generate_matrix(key)
+
+print("\nGenerated 5x5 Matrix:")
+for row in matrix:
+    print(row)
+
+cipher_text = """
+KXJEY UREBE ZWEHE WRYTU HEYFS
+KREHE GOYFI WTTTU OLKSY CAJPO 
+BOTEI ZONTX BYBNT GONEY CUZWR 
+GDSON SXBOU YWRHE BAAHY USEDQ
+"""
+
+cipher_clean = clean_text(cipher_text)
+
+result = decrypt(cipher_clean, matrix)
+
+print("\nDecrypted Text:")
+print(result)
